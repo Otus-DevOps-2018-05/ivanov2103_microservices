@@ -1,17 +1,21 @@
-# Выполнено ДЗ №
+# Выполнено ДЗ № 03
 
  - [x] Основное ДЗ
  - [ ] Задание со *
 
 ## В процессе сделано:
- - Pull Request template added.
+ - Play-travis branch and test.py file added.
+ - Created .travis.yml file. Travis CI notification in Slack configured.
+ - Fixed the test.py script.
+ - Filled PR file.
 
 ## Как запустить проект:
- - Don't anything run in this task.
+ - Run command *py test.py*.
 
 ## Как проверить работоспособность:
- - Checking Pull Request template.
+ - Executing status must be "OK".
 
 ## PR checklisk
  - [x] Выставил label с номером домашнего задания
- - [ ] Выставил label с темой домашнего задания
+ - [x] Выставил label с темой домашнего задания
+
