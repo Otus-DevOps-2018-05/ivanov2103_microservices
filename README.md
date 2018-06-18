@@ -1,6 +1,6 @@
 # ivanov2103_infra
 ivanov2103 Infra repository
-![Build Status](https://api.travis-ci.org/Otus-DevOps-2018-02/ivanov2103_infra.png)  
+![Build Status](https://api.travis-ci.org/Otus-DevOps-2018-02/ivanov2103_microservices.png)  
 
 ## Homework-04
 - SSH command for jumping to local someinternalhost across bastion host:  
