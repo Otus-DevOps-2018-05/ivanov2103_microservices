@@ -1,0 +1,32 @@
+{
+  "variables": {
+    "proj_id": null,
+    "source_img": null,
+    "machine_type": null
+    },
+  "builders": [
+    {
+    "type": "googlecompute",
+    "project_id": "{{user `proj_id`}}",
+    "image_name": "my-docker-hosts-{{timestamp}}",
+    "image_family": "my-docker-hosts",
+    "source_image_family": "{{user `source_img`}}",
+    "zone": "europe-west1-b",
+    "ssh_username": "appuser",
+    "ssh_port": "22",
+    "ssh_timeout": "60s",
+    "machine_type": "{{user `machine_type`}}",
+    "image_description": "image for docker server",
+    "disk_size": "10",
+    "disk_type": "pd-standard",
+    "network": "default",
+    "tags": [ "packer", "docker-server" ]
+    }
+  ],
+  "provisioners": [
+    {
+    "type": "ansible",
+    "playbook_file": "ansible/site.yml"
+    }
+  ]
+}

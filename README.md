@@ -134,3 +134,16 @@ For correcting this errors was changed install instruction in .travis.yml: "- **
 I saw that changes in the container do not affect the image.  
 ### **\***  
 Commented in docker-monolith/docker-1.log.  
+
+## Homework-14  
+- Docler-machine in GCP docker project was installed and some demos from lecture was repeated.  
+Container run in host namespace and get access to host processes when executing the command **docker run --rm --pid host -ti tehbilly/htop**  
+Builded image with added MongoDB and reddit application and script for running this. Launched container from building image, added GCP VPC firewall rule and checked access to reddit.  
+Registered on the Docker Hub and uploaded my image.  
+Launched container from building image in my local host and checked access to reddit on my host.  
+### **\***  
+Created a packer template with ansible provisioner for install Docker.  
+Created terraform configurations for deploying instances from this packer template. Number of instances defined by a variable.  
+Created ansible playbooks for install Docker and launching container with applications (https://docs.ansible.com/ansible/latest/modules/docker_container_module.html).  
+To save time made a simplified configurations from previous homeworks.  
+Was checked access reddit by url http://IP_instancess:9292 - passed.  
