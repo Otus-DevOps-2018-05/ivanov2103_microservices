@@ -148,7 +148,7 @@ Created ansible playbooks for install Docker and launching container with applic
 To save time made a simplified configurations from previous homeworks.  
 Was checked access reddit by url http://IP_instancess:9292 - passed.  
 
-## Homework-14  
+## Homework-15  
 - Application was divided to three components. For each of this was created image.   
 Question: "Обратите внимание! Cборка ui началась не с первого шага. Подумайте - почему?"  
 Answer: "Перед сборкой образа ui был собран образ comment с идентичными слоями, которые были переиспользованы."  
@@ -186,7 +186,7 @@ IMAGE               CREATED             CREATED BY                              
 907010ff3e95        2 hours ago         /bin/sh -c #(nop) ADD multi:3dab4bccc1370182…   1.74kB  
 ...  
 docker history ivanov2103/ui:4.0  
-IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT 
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT  
 ...  
 433e58fe50ed        8 seconds ago       /bin/sh -c bundle install                       38.1MB  
 88e2e4a04c39        26 seconds ago      /bin/sh -c #(nop) COPY dir:b1784444bc0b39ced…   15.2kB  
