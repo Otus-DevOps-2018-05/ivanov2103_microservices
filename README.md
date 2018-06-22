@@ -147,3 +147,48 @@ Created terraform configurations for deploying instances from this packer templa
 Created ansible playbooks for install Docker and launching container with applications (https://docs.ansible.com/ansible/latest/modules/docker_container_module.html).  
 To save time made a simplified configurations from previous homeworks.  
 Was checked access reddit by url http://IP_instancess:9292 - passed.  
+
+## Homework-15  
+- Application was divided to three components. For each of this was created image.   
+Question: "Обратите внимание! Cборка ui началась не с первого шага. Подумайте - почему?"  
+Answer: "Перед сборкой образа ui был собран образ comment с идентичными слоями, которые были переиспользованы."  
+Launched our containers in dedicated network with network aliases.  
+### **\***  
+Launched our containers with other network aliases:  
+**docker run -d --network=reddit --network-alias=my_post_db --network-alias=my_comment_db mongo:latest  
+docker run -e "POST_DATABASE_HOST=my_post_db" -d --network=reddit --network-alias=my_post ivanov2103/post:1.0  
+docker run -e "COMMENT_DATABASE_HOST=my_comment_db" -d --network=reddit --network-alias=my_comment ivanov2103/comment:1.0  
+docker run -e "POST_SERVICE_HOST=my_post" -e "COMMENT_SERVICE_HOST=my_comment" -d --network=reddit -p 9292:9292 ivanov2103/ui:1.0**  
+- Image ui was reduced by replacing the source image to ubuntu:16.04.  
+## **\***  
+Image ui was more reduced by replacing the source image to alpine.  
+Changes in Dockerfile:  
+*\#FROM ubuntu:16.04  
+FROM alpine  
+\#RUN apt-get update \  
+\#    && apt-get install -y ruby-full ruby-dev build-essential \  
+\#    && gem install bundler --no-ri --no-rdoc  
+RUN apk add --update alpine-sdk \  
+    && apk add --update ruby ruby-dev \  
+    &&  gem install bundler --no-ri --no-rdoc*  
+Size new image:  
+*REPOSITORY           TAG                 IMAGE ID            CREATED             SIZE  
+ivanov2103/ui        3.0                 d3378fe54ca9        2 minutes ago       **231MB**  
+ivanov2103/ui        2.0                 bc39a1f8d9f3        36 minutes ago      463MB*  
+## **\*\***  
+For deleted one layer was replaced two instructions: "ADD Gemfile* $APP_HOME/" and "ADD . $APP_HOME" to one: "COPY . $APP_HOM" before "RUN bundle install".  
+Dockerfile was some optimized and size of image was reduced on ~1.5Kb.  
+*docker history ivanov2103/ui:3.0  
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT  
+...  
+407343b45997        2 hours ago         /bin/sh -c #(nop) ADD dir:d5cc194067e6dd101b…   15.1kB  
+059283494c0d        2 hours ago         /bin/sh -c bundle install                       38.1MB  
+907010ff3e95        2 hours ago         /bin/sh -c #(nop) ADD multi:3dab4bccc1370182…   1.74kB  
+...  
+docker history ivanov2103/ui:4.0  
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT  
+...  
+433e58fe50ed        8 seconds ago       /bin/sh -c bundle install                       38.1MB  
+88e2e4a04c39        26 seconds ago      /bin/sh -c #(nop) COPY dir:b1784444bc0b39ced…   15.2kB  
+...*  
+Comment service was optimized too.  
