@@ -3,7 +3,7 @@ FROM alpine
 #RUN apt-get update -qq && apt-get install -y build-essential
 RUN apk add --update alpine-sdk \
     && apk add --update ruby ruby-dev \
-    &&  gem install bundler tzinfo-data --no-ri --no-rdoc
+    &&  gem install bundler --no-ri --no-rdoc
 
 ENV APP_HOME /app
 RUN mkdir $APP_HOME
