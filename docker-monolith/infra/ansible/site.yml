@@ -1,0 +1,9 @@
+---
+- name: Instal Docker && prerequisites
+  hosts: all
+  become: true
+  gather_facts: False
+  tasks:
+  - include: base.yml
+  - include: docker.yml
+
