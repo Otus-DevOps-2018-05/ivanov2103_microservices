@@ -1,5 +1,5 @@
 #FROM ruby:2.2
-FROM alpine
+FROM alpine:3.7
 #RUN apt-get update -qq && apt-get install -y build-essential
 RUN apk add --update alpine-sdk \
     && apk add --update ruby ruby-dev \

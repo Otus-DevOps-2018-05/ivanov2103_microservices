@@ -1,6 +1,6 @@
 ---
 - name: Launch Reddit container
-  hosts: my-docker-hosts*
+  hosts: tag_my-docker-hosts
   become: true
   gather_facts: False
 
