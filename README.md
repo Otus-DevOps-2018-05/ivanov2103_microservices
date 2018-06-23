@@ -3,199 +3,36 @@ ivanov2103 Infra repository
 ![Build Status](https://api.travis-ci.org/Otus-DevOps-2018-02/ivanov2103_microservices.png)  
 
 ## Homework-04
-- SSH command for jumping to local someinternalhost across bastion host:  
-**$ ssh -J appuser@35.205.23.100 appuser@10.132.0.3**  
-- Configuration for use short command of SSH jumping with aliase:  
-**$ cat ../.ssh/config**  
-_Host bastion  
- HostName 35.205.23.100  
- User appuser  
-Host someinternalhost  
- HostName 10.132.0.3  
- User appuser  
- ProxyCommand ssh -A bastion -W %h:%_  
-- GCP hosts IP:  
-bastion_IP = 35.205.23.100  
-someinternalhost_IP = 10.132.0.3  
 
 ## Homework-05
-- command for create firewall-rules:  
-**gcloud compute firewall-rules create default-puma-server \\  
-    --network default \\  
-    --action allow \\  
-    --direction ingress \\  
-    --rules tcp:9292 \\  
-    --source-ranges 0.0.0.0/0 \\  
-    --priority 1000 \\  
-    --target-tags puma-server**
-- For create VM and firewall-rules run command:  
-**./create_VM_firewall.sh**  
-- For install Ruby, Mongodb and deploy application, run commands:  
-**scp ~/ivanov2103_infra/deploy.sh ~/ivanov2103_infra/install_mongodb.sh ~/ivanov2103_infra/install_ruby.sh appuser@35.195.95.117:\~/**  
-**ssh appuser@35.195.95.117 './install_ruby.sh ; ./install_mongodb.sh ; ./deploy.sh'**  
-- For create VM and firewall-rules with a startup script local file, run command:  
-**./create_VM_firewall_file.sh**  
-- For create VM and firewall-rules with a startup script stored on Google Cloud Storage, run command:  
-**./create_VM_firewall_url.sh**  
-- Test hosts IP:Port:  
-testapp_IP = 35.195.95.117  
-testapp_port = 9292  
 
 ## Homework-06
-- For create GCP image by Packer template, including Ruby and MongoDB, run command:  
-**./packer build -var-file=variables.json ubuntu16.json**  
-- For create GCP image "Full" by Packer template, including Ruby, MongoDB and deployed application with autostart, run command:  
-**./packer build -var-file=variables.json immutable.json**  
-- For create GCP image "Full" and runing instatnce from this by gcloud command, run:  
-**packer build -var-file=variables.json immutable.json ; sleep.exe 15 ; \.\./config-scripts/create-reddit-vm.sh**
-- Test hosts IP:Port:  
-testapp_IP = 35.195.95.117  
-testapp_port = 9292  
 
 ## Homework-07
-- For create two GCP instances with Ruby, MongoDB and deployed Reddit application, run command: **terraform.exe apply**. The load balancer is also created.  
-### **\***  
-1. Arguments for add more keys to the metadata resource (google_compute_project_metadata_item):  
-_key   = "ssh-keys"  
-value = "appuser:${file(var.public_key_path)} appuser1:${file(var.public_key_path)} appuser2:${file(var.public_key_path)}"_  
-2. Key "appuser_web" was deleted after executing **terraform apply** because there was no configuration for this resource.  
-### **\*\***
-1. For creating load balancing  instance, resources was defined from documentation (https://cloud.google.com/compute/docs/load-balancing/http/). Resource configuration based on  "gce-lb-http" module parts (https://registry.terraform.io/modules/GoogleCloudPlatform/lb-http/google/1.0.5).   
-2. We are use argument "count" for deploy more than one identical instance.  
-- Test hosts IP:Port (load balancer):  
-testapp_IP = 35.190.2.190  
-testapp_port = 80  
 
 ## Homework-08
-- Was imported SSH firewall rule resource, has been studied dependence of resources by example of App IP resource creation. The configuration was divided to App and DB modules. Were created: configurations for two infrastructure environments, storage buckets resources from "storage-bucket" registry module.  
-### **\***  
-Was created remote backend on GCP storage for state file. It was done for App and DB environments. Was verified blocking the state file with simultaneous access (_Error: Error locking state: Error acquiring the state lock: writing "gs://storage-bucket-prod/terraform/state/default.tflock" failed: googleapi: Error 412: Precondition Failed, conditionNotMet_).  
-### **\*\***  
-Were added App module provisioners for deploying Reddit. For access to Mongodb was needed change the configuration of Mongodb and recreated the image of the DB instance:  
-_$ cat ../../packer/scripts/install_mongodb.sh  
-\#!/bin/bash  
-...  
-apt install -y mongodb-org  
-**sed -i 's/.\*bindIp:.\*/  bindIp: 0.0.0.0/' /etc/mongod.conf**  
-systemctl enable mongod_  
 
 ## Homework-09
-- Was created configution file, inventory with hostgroups in .ini and .yaml format, studed some modules (ping, command, shell, systemd, service, git). Was implemented simple playbook for install Reddit application.  
-### **\***  
-Was created inventory in .json format by task recuirements. Was implemented simple script accepting only _--list_ parameter for reading JSON inventory. The _--host_ parameter doesn't was implement because JSON inventory has _\_meta_ element with variables.  
-## Homework-10  
-- Was studied handlers and templates for configuration and deploying. Were studied different approaches to infrastructure management: one playbook - one play, one playbook - many plays, many playbooks. Was replaced bash scenaries to ansible playboks in packer provisioners and re-created GCE instance images.  
-### **\***  
-Was created dynamic inventory by gce.py script, file secrets.py with defined parameters  was putted in $PYTHONPATH directory (/usr/lib/python2.7/), file gce.ini with undefined parameters values was putted in ansible work directory. In user ~/.profile was determined environment variable $GCE_INI_PATH with path to gce.ini. GCE service account JSON credentials was taken outside the repository. In ansible.cfg was changed local inventory to dynamic. Was created playbooks for dynamic inventory (filenames with suffix \_di), in this playbooks was changed hosts.  
 
 ## Homework-11  
-- Was doed:  
-Created role for manage db and app services in Galaxy format.  
-Created app and db environments with their inventory and group variables.  
-Optimized ansible directory and ansible.cfg.  
-Used community role jdauphant.nginx for configure nginx reverse-proxy.  
-Learned use Ansible Vault for keep password in encrypted files.  
-### **\***  
-Dynamic inventory from Homework-10 was configured for using in stage and prod environments. Added host groups, returned by dynamic inventory script in hosts and group variables configuration (Thank Andrei Bogomja and Nikolay Antsiferov).  
-### **\*\***  
-Was configured TravisCI for check syntax and configuration my packer templates, terraform files and ansible files. Created a github separate repository for test TravisCI checks by trytravis util.  
-**Build status badge in title README.md.**  
 
 ## Homework-12  
-- Local infrastructure was deployed with use Vagrant.  
-Phyton installing moved to dedicated playbook, added tasks for installing and configuration Mongo DB, installing Ruby and configuration Puma.  
-Added parameter for deploy user and changed templates and tasks for use it as variable.  
-I use WSL and needed in some additional tuning: added environment variable (https://www.vagrantup.com/docs/other/wsl.html) and changed Vagrantfile - turning off the serial port (https://github.com/joelhandwell/ubuntu_vagrant_boxes/issues/1).  
-### **\***  
-Wariable nginx_sites format was difined by example from https://www.vagrantup.com/docs/provisioning/ansible_common.html and ansible app task message below from playing on GCP stage environment (deleted after checking).  
-\- name: Show nginx_sites variable value  
-  debug:  
-    msg: "{{ nginx_sites }}"  
-- Were installed Molecule, Ansible, Testinfra in python *virtualenv* environment. Changed testinfra version in requirements.txt because received an error:  
-*"molecule 2.14.0 has requirement testinfra==1.12.0, but you'll have testinfra 1.14.0 which is incompatible."*   
-Were created and running some tests by Testinfra modules for check: MongoDB is enabled and running, has valid bindIp in config and listening TCP port 27017.  
-Packer templates was changed for use role.  
-For my WSL environment i needed configure Virtualbox provider across provider_raw_config_args variable in molecule.yml:  
-platforms:  
-  \- name: instance  
-    provider_raw_config_args:  
-      \- "customize [ 'modifyvm', :id, '--uartmode1', 'disconnected' ]"  
-### **\*\***
-Moved DB role to other git repository and plugged it to "infra" repository. Checked this by creating terraform stage envinroment and playing site.yml - was succesful.  
-Added checking my DB role to TravisCI (used example):https://github.com/ivanov2103/ansible_role_dbserver - build status badge in title README.md.  
-Added build notification to my Slack channel \#igor_ivanov.  
-In integration process I had some errors:  
-*"GoogleAuthError('PyCrypto library required for '\nlibcloud.common.google.GoogleAuthError: 'PyCrypto library required for Service Account Authentication.'\n"}*  
-*ERROR: Ansible version '2.3.0.0' not supported.  Molecule only supports Ansible versions '>=2.5' with Python version '(3, 6)'*  
-For correcting this errors was changed install instruction in .travis.yml: "- **travis_wait** pip install **ansible>=2.5** molecule apache-libcloud **pycrypto**"  
 
 ## Homework-13  
-- I was studed create and basic manage containers (run, start/stop/kill, view, delete), running process in to container, creating image from container.  
-I saw that changes in the container do not affect the image.  
-### **\***  
-Commented in docker-monolith/docker-1.log.  
 
 ## Homework-14  
-- Docler-machine in GCP docker project was installed and some demos from lecture was repeated.  
-Container run in host namespace and get access to host processes when executing the command **docker run --rm --pid host -ti tehbilly/htop**  
-Builded image with added MongoDB and reddit application and script for running this. Launched container from building image, added GCP VPC firewall rule and checked access to reddit.  
-Registered on the Docker Hub and uploaded my image.  
-Launched container from building image in my local host and checked access to reddit on my host.  
-### **\***  
-Created a packer template with ansible provisioner for install Docker.  
-Created terraform configurations for deploying instances from this packer template. Number of instances defined by a variable.  
-Created ansible playbooks for install Docker and launching container with applications (https://docs.ansible.com/ansible/latest/modules/docker_container_module.html).  
-To save time made a simplified configurations from previous homeworks.  
-Was checked access reddit by url http://IP_instancess:9292 - passed.  
 
 ## Homework-15  
-- Application was divided to three components. For each of this was created image.   
-Question: "Обратите внимание! Cборка ui началась не с первого шага. Подумайте - почему?"  
-Answer: "Перед сборкой образа ui был собран образ comment с идентичными слоями, которые были переиспользованы."  
-Launched our containers in dedicated network with network aliases.  
-### **\***  
-Launched our containers with other network aliases:  
-**docker run -d --network=reddit --network-alias=my_post_db --network-alias=my_comment_db mongo:latest  
-docker run -e "POST_DATABASE_HOST=my_post_db" -d --network=reddit --network-alias=my_post ivanov2103/post:1.0  
-docker run -e "COMMENT_DATABASE_HOST=my_comment_db" -d --network=reddit --network-alias=my_comment ivanov2103/comment:1.0  
-docker run -e "POST_SERVICE_HOST=my_post" -e "COMMENT_SERVICE_HOST=my_comment" -d --network=reddit -p 9292:9292 ivanov2103/ui:1.0**  
-- Image ui was reduced by replacing the source image to ubuntu:16.04.  
-## **\***  
-Image ui was more reduced by replacing the source image to alpine.  
-Changes in Dockerfile:  
-*\#FROM ubuntu:16.04  
-FROM alpine  
-\#RUN apt-get update \  
-\#    && apt-get install -y ruby-full ruby-dev build-essential \  
-\#    && gem install bundler --no-ri --no-rdoc  
-RUN apk add --update alpine-sdk \  
-    && apk add --update ruby ruby-dev \  
-    &&  gem install bundler --no-ri --no-rdoc*  
-Size new image:  
-*REPOSITORY           TAG                 IMAGE ID            CREATED             SIZE  
-ivanov2103/ui        3.0                 d3378fe54ca9        2 minutes ago       **231MB**  
-ivanov2103/ui        2.0                 bc39a1f8d9f3        36 minutes ago      463MB*  
-## **\*\***  
-For deleted one layer was replaced two instructions: "ADD Gemfile* $APP_HOME/" and "ADD . $APP_HOME" to one: "COPY . $APP_HOM" before "RUN bundle install".  
-Dockerfile was some optimized and size of image was reduced on ~1.5Kb.  
-*docker history ivanov2103/ui:3.0  
-IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT  
-...  
-407343b45997        2 hours ago         /bin/sh -c #(nop) ADD dir:d5cc194067e6dd101b…   15.1kB  
-059283494c0d        2 hours ago         /bin/sh -c bundle install                       38.1MB  
-907010ff3e95        2 hours ago         /bin/sh -c #(nop) ADD multi:3dab4bccc1370182…   1.74kB  
-...  
-docker history ivanov2103/ui:4.0  
-IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT  
-...  
-433e58fe50ed        8 seconds ago       /bin/sh -c bundle install                       38.1MB  
-88e2e4a04c39        26 seconds ago      /bin/sh -c #(nop) COPY dir:b1784444bc0b39ced…   15.2kB  
-...*  
-Comment service was optimized too.  
+
+README.md all Homeworks before that accees by URL below. After Homework-16 each Homework will have own README.md
+
+[https://github.com/Otus-DevOps-2018-02/ivanov2103_microservices/blob/docker-3/README.md](https://github.com/Otus-DevOps-2018-02/ivanov2103_microservices/blob/docker-3/README.md "README.md")
+
+
 
 ## Homework-16  
-- Viewed how working network drivers: none, host.  
-Question (driver host): "Каков результат? Что выдал docker ps? Как думаете почему?"  
+- Viewed how working network drivers: *none*, *host*.  
+Question (driver *host*): "Каков результат? Что выдал docker ps? Как думаете почему?"  
 Answer: "Запустился только один контейнер, потому что несколько сервисов с одним и тем же портом не могут быть запущены."  
 ### **\***  
 Containers with driver *host* work in host network namespace, host *default* network namespace used by this containers.  
@@ -208,8 +45,8 @@ default*
 **docker ps | grep -v "CONTAINER ID" ; echo "===namespaces===" ; ip netns**  
 *dc3f3b9580f8        nginx               "nginx -g 'daemon of…"   3 seconds ago       Up 3 seconds                            confident_morse  
 ===namespaces===  
-default
-  *  
+default*
+
 Container with driver *none* working in dedicated network namespace with localhost interface only.  
   
 **docker run --network none -d nginx**  
@@ -226,35 +63,39 @@ default*
     RX: bytes  packets  errors  dropped overrun mcast  
     0          0        0       0       0       0  
     TX: bytes  packets  errors  dropped carrier collsns  
-    0          0        0       0       0       0  
-*  
-- Viewed how working network driver bridge.  
-Launched containers in one separate bridge networks with --network-alias for name resolution.  
-Launched containers in several dedicated bridge networks with --name for name resolution and connected "post" and "comment" containers to bridge "ui" container.  
+    0          0        0       0       0       0*
+    
+- Viewed how working network driver *bridge*.  
+Launched containers in one separate bridge networks with *--network-alias* for name resolution.  
+Launched containers in several dedicated bridge networks with *--name* for name resolution and connected "post" and "comment" containers to bridge "ui" container.  
 ### **\***  
 Bridge networks docker host and bridge interfaces of containers was viewed.  
 Viewed iptables rules for containers access to external network (MASQUERADE source address translation for all bridge networks), DNAT rule for translation all input connections on 9292 port to "ui" container.  
 For listeting 9292 port running docker-proxy process.  
-- Installed docker-compose, created docker-compose.yml declaration and .env file with some enviroment variables for docker-compose.  
+
+- Installed docker-compose, created *docker-compose.yml* declaration and *.env* file with some enviroment variables for docker-compose.  
 Adapted docker-compose.yml for launching containers in several dedicated bridge networks.  
 ### **\***  
-Default project name may be change by *"-p"* command option, by the *"COMPOSE_PROJECT_NAME"* environment and *"project_name"* instruction in .yml file.  
+
+Default project name may be change by *"-p"* command option, by the *"COMPOSE\_PROJECT\_NAME"* environment and *"project_name"* instruction in .yml file.  
 ### **\***  
+
 I wasn't found how coping files to container by docker-compose and was used volumes instruction for mount directory with app code to container: 
-https://stackoverflow.com/questions/42877801/how-to-sync-code-between-container-and-host-using-docker-compose  
-https://docs.docker.com/compose/extends/#understand-the-extends-configuration  
+[https://stackoverflow.com/questions/42877801/how-to-sync-code-between-container-and-host-using-docker-compose](https://stackoverflow.com/questions/42877801/how-to-sync-code-between-container-and-host-using-docker-compose)  
+[https://docs.docker.com/compose/extends/#understand-the-extends-configuration](https://docs.docker.com/compose/extends/#understand-the-extends-configuration)  
+
 Src files was copied to docker-host by rsync:  
 **rsync -avzh ~/ivanov2103_microservices/src/ui ~/ivanov2103_microservices/src/comment ~/ivanov2103_microservices/src/post-py appuser@docker-host:/home/appuser/src**  
+
 Checking volumes:  
 **docker exec comment ls -l /app/TestFile ; ssh appuser@35.195.242.58 touch /home/appuser/src/comment/TestFile; docker exec comment ls -l /app/TestFile**  
 *ls: /app/TestFile: No such file or directory  
 Warning: Permanently added '35.195.242.58' (ECDSA) to the list of known hosts.  
--rw-rw-r--    1 1002     1003             0 Jun 23 07:12 /app/TestFile  
-*  
+-rw-rw-r--    1 1002     1003             0 Jun 23 07:12 /app/TestFile*  
+
 Checking debug and number of workers (finded in log):  
-docker logs -f comment  
+**docker logs -f comment**  
 *...  
 [1] \* Process workers: 2  
 ...  
-D, [2018-06-23T07:03:27.748739 #8] DEBUG -- : MONGODB | Server comment_db:27017 initializing.  
-*  
+D, [2018-06-23T07:03:27.748739 #8] DEBUG -- : MONGODB | Server comment_db:27017 initializing.*  
