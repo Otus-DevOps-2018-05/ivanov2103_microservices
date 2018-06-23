@@ -99,3 +99,4 @@ Checking debug and number of workers (finded in log):
 [1] \* Process workers: 2  
 ...  
 D, [2018-06-23T07:03:27.748739 #8] DEBUG -- : MONGODB | Server comment_db:27017 initializing.*  
+
