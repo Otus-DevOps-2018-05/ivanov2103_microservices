@@ -1,0 +1,23 @@
+---
+- name: Launch Gitlab Runner container
+  hosts: tag_my-gitlab-host
+  become: true
+  gather_facts: False
+  vars_files:
+    - "./token.yml"
+
+  tasks:
+  - name: Gitlab Runner container
+    docker_container:
+      name: gitlab-runner
+      image: gitlab/gitlab-runner:latest
+      state: started
+#      recreate: yes
+      restart_policy: always
+      volumes:
+        - /srv/gitlab-runner/config:/etc/gitlab-runner
+        - /var/run/docker.sock:/var/run/docker.sock
+#NOT WORKING!!!      command: gitlab-runner register --non-interactive --executor "docker" --docker-image alpine:latest --url "http://35.240.31.203" --registration-token "{{ EXAMPLE_REGISTRATION_TOKEN }}" --description "my-runner" --tag-list "linux,xenial,ubuntu,docker" --run-untagged --locked="false"
+
+  - name: Gitlab Runner container registr
+    raw: docker exec -it gitlab-runner gitlab-runner register --non-interactive --executor "docker" --docker-image alpine:latest --url "http://35.240.31.203" --registration-token "{{ EXAMPLE_REGISTRATION_TOKEN }}" --description "my-runner" --tag-list "linux,xenial,ubuntu,docker" --run-untagged --locked="false"
