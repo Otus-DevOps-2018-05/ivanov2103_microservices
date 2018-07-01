@@ -64,3 +64,8 @@ Command options of *docker_container* module in my configuration wasn't work (le
 
 My channel with notifications in SLACK:
 [https://devops-team-otus.slack.com/messages/C9M5X748Y/](https://devops-team-otus.slack.com/messages/C9M5X748Y/)
+
+Geted error from Gitlab CE pipeline build job:  
+*"fatal: repository 'http://gitlab-ci-token:xxxxxxxxxxxxxxxxxxxx@35.205.167.168/homework/example.git/' not found"*  
+Recreated Gitlab CI Docker image and container with hostname instead IP. Added resolving hostname to current IP in /etc/hosts on server and my workspace.
+
