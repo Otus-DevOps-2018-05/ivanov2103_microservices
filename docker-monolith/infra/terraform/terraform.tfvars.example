@@ -1,0 +1,5 @@
+project = "myproj-12345"
+region = "europe-west1"
+public_key_path = "~/.ssh/appuser.pub"
+zone = "europe-west1-b"
+count = "2"
