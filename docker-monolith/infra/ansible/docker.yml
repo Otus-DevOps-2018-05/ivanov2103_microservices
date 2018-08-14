@@ -1,0 +1,30 @@
+---
+- name: Install prerequisites
+  apt: name={{item}} update_cache=yes
+  with_items:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - software-properties-common
+
+- name: Add Docker repo key
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker repo
+  apt_repository: repo="deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable" update_cache=yes
+
+- name: Install Docker
+  apt:
+    name: docker-ce
+
+- name: Install pip
+  apt:
+    name: python-pip
+    state: latest
+
+- name: Install docker-py
+  pip:
+    name: docker-py
+

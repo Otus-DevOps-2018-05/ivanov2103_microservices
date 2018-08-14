@@ -1,0 +1,15 @@
+---
+- name: Launch Reddit container
+  hosts: tag_my-docker-hosts
+  become: true
+  gather_facts: False
+
+  tasks:
+  - name: Reddit container
+    docker_container:
+      name: reddit
+      image: ivanov2103/otus-reddit:1.0
+      state: started
+      ports:
+      - "9292:9292"
+
