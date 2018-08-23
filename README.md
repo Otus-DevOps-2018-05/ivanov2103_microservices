@@ -62,3 +62,4 @@ README.md all Homeworks before that accees by URL below. After Homework-16 each 
 С Makefile особых трудностей не возникло, сделал необходимый минимум. Учетные данные Docker Hub и путь к репозиторию определены переменными окружения в отдельном файле, который был добавлен в *.gitignore* (пример в файле *.make_env.example*).  
 
 Все созданные образы были запушены в Docker Hub.
+
