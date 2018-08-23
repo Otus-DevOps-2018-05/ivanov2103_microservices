@@ -1,0 +1,88 @@
+version: '3.3'
+
+services:
+  mongodb_exporter:
+    image: ${COMPOSE_USERNAME}/mongodb_exporter:latest
+    networks:
+      back_net:
+
+  cloudprober:
+    image: ${COMPOSE_USERNAME}/cloudprober:latest
+    networks:
+      front_net:
+
+  node-exporter:
+    image: prom/node-exporter:v0.15.2
+    user: root
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      back_net:
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points="^/(sys|proc|dev|host|etc)($$|/)"'
+  prometheus:
+    image: ${COMPOSE_USERNAME}/prometheus
+    ports:
+      - '9090:9090'
+    volumes:
+      - prometheus_data:/prometheus
+    networks:
+      back_net:
+      front_net:
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention=1d'
+  post_db:
+    image: mongo:${MONGO_REV}
+    volumes:
+      - post_db:/data/db
+    container_name:
+      mongo_db
+    networks:
+      back_net:
+        aliases:
+          - post_db
+          - comment_db
+  ui:
+    image: ${COMPOSE_USERNAME}/ui:${UI_REV}
+    ports:
+      - ${UI_PORT}:${UI_PORT}/tcp
+    container_name:
+      ui
+    networks:
+      front_net:
+  post:
+    image: ${COMPOSE_USERNAME}/post:${POST_REV}
+    container_name:
+      post
+    networks:
+      back_net:
+      front_net:
+  comment:
+    image: ${COMPOSE_USERNAME}/comment:${COMMENT_REV}
+    container_name:
+      comment
+    networks:
+      back_net:
+      front_net:
+
+volumes:
+  post_db:
+  prometheus_data:
+
+networks:
+  reddit:
+  back_net:
+    ipam:
+      config:
+        - subnet: 10.0.2.0/24
+  front_net:
+    ipam:
+      config:
+        - subnet: 10.0.1.0/24
+
