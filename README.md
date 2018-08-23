@@ -85,3 +85,4 @@ Error response from daemon: Get https://gitlab-host.my/v2/: dial tcp: lookup   g
 *GITLAB\_HOST*  
 *APPUSER\_PRIV_KEY*  
 IP адрес можно было выяснить и во время выполнения джоба, GCP internal DNS (прописывается в resolv.conf) разрешает имена инстансов, но посчитал приемлемым определить через переменную окружения.  
+
