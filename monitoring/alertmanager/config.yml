@@ -1,0 +1,23 @@
+global:
+  slack_api_url: 'https://hooks.slack.com/services/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'
+  smtp_from: 'ivanov2103@example.com'
+  smtp_smarthost: 'docker-host:25'
+  smtp_require_tls: false
+
+route:
+  receiver: 'slack-notifications'
+  routes:
+    - match:
+      continue: true
+      receiver: 'slack-notifications'
+    - match:
+      receiver: 'mail'
+
+receivers:
+- name: 'slack-notifications'
+  slack_configs:
+  - channel: '#igor_ivanov'
+- name: 'mail'
+  email_configs:
+  - to: 'appuser@docker-host'
+
