@@ -3,7 +3,9 @@ image: ruby:2.4.2
 stages:
   - build
   - test
-  - deploy
+  - review
+  - stage
+  - production
 
 variables:
   DATABASE_URL: 'mongodb://mongo/user_posts'
@@ -11,11 +13,23 @@ variables:
 before_script:
   - cd reddit
   - bundle install
+  - echo "${GITLAB_HOST} ${CI_REGISTRY}" >> /etc/hosts
 
 build_job:
   stage: build
   script:
     - echo 'Building'
+    - apt-get update
+    - apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common python-minimal
+    - openssl s_client -showcerts -connect ${CI_REGISTRY}:443 </dev/null 2>/dev/null|openssl x509 -outform PEM > /usr/local/share/ca-certificates/${CI_REGISTRY}.crt && update-ca-certificates
+    - curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+    - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable"
+    - apt-get update && apt-get -y install docker-ce
+    - service docker start
+    - cd ../
+    - docker build -t ${CI_REGISTRY}/homework/example2/reddit:latest docker-monolith
+    - echo $CI_BUILD_TOKEN | docker login -u gitlab-ci-token --password-stdin https://${CI_REGISTRY}
+    - docker push ${CI_REGISTRY}/homework/example2/reddit:latest
 
 test_unit_job:
   stage: test
@@ -29,7 +43,103 @@ test_integration_job:
   script:
     - echo 'Testing 2'
 
-deploy_job:
-  stage: deploy
+branch review:
+  stage: review
+  script:
+    - echo "Deploy to $CI_ENVIRONMENT_SLUG"
+    - apt-get update
+    - apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common python-minimal
+    - curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+    - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable"
+    - echo "deb http://packages.cloud.google.com/apt cloud-sdk-jessie main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+    - curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+    - apt-get update && apt-get -y install docker-ce google-cloud-sdk
+    - base=https://github.com/docker/machine/releases/download/v0.14.0 && curl -L $base/docker-machine-$(uname -s)-$(uname -m) >/tmp/docker-machine && install /tmp/docker-machine /usr/local/bin/docker-machine
+    - echo $GCP_AUTH_KEY > .key-file.json
+    - gcloud auth activate-service-account --key-file=.key-file.json
+    - export GOOGLE_APPLICATION_CREDENTIALS=.key-file.json
+    - echo ${CI_REGISTRY} > /tmp/env_reg
+    - echo ${GITLAB_HOST} > /tmp/env_host
+    - gcloud compute instances describe ${CI_COMMIT_REF_NAME}-branch-host --zone=europe-west1-b || (docker-machine create --driver google --google-machine-image https://www.googleapis.com/compute/v1/projects/ubuntu-os-cloud/global/images/family/ubuntu-1604-lts --google-machine-type n1-standard-1 --google-zone europe-west1-b ${CI_COMMIT_REF_NAME}-branch-host && docker-machine scp /tmp/env_reg ${CI_COMMIT_REF_NAME}-branch-host:/tmp && docker-machine scp /tmp/env_host ${CI_COMMIT_REF_NAME}-branch-host:/tmp && docker-machine ssh ${CI_COMMIT_REF_NAME}-branch-host 'export CI_REGISTRY=`cat /tmp/env_reg` ; export GITLAB_HOST=`cat /tmp/env_host` ; cat /etc/hosts > /tmp/hosts ; echo "${GITLAB_HOST} ${CI_REGISTRY}" >> /tmp/hosts ; sudo cp /tmp/hosts /etc/hosts ; sudo iptables -F ; openssl s_client -showcerts -connect ${CI_REGISTRY}:443 </dev/null 2>/dev/null|openssl x509 -outform PEM > /tmp/${CI_REGISTRY}.crt ; sudo cp /tmp/*.crt /usr/local/share/ca-certificates/ && sudo update-ca-certificates')
+  environment:
+    name: branch/$CI_COMMIT_REF_NAME
+    url: http://$CI_ENVIRONMENT_SLUG.example.com
+  only:
+    - branches
+  except:
+    - master
+
+deploy_dev_job:
+  stage: review
   script:
     - echo 'Deploy'
+    - apt-get update
+    - apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common python-minimal
+    - curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+    - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable"
+    - echo "deb http://packages.cloud.google.com/apt cloud-sdk-jessie main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+    - curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+    - apt-get update && apt-get -y install docker-ce google-cloud-sdk
+    - service docker start
+    - base=https://github.com/docker/machine/releases/download/v0.14.0 && curl -L $base/docker-machine-$(uname -s)-$(uname -m) >/tmp/docker-machine && install /tmp/docker-machine /usr/local/bin/docker-machine
+    - echo $GCP_AUTH_KEY > .key-file.json
+    - gcloud auth activate-service-account --key-file=.key-file.json
+    - export GOOGLE_APPLICATION_CREDENTIALS=.key-file.json
+    - gcloud compute instances remove-metadata ${CI_COMMIT_REF_NAME}-branch-host --keys=sshKeys --zone=europe-west1-b
+    - useradd -d /home/appuser appuser && mkdir -p /home/appuser/.ssh && echo "$APPUSER_PRIV_KEY" > /home/appuser/.ssh/id_rsa
+    - chown -R appuser.appuser /home/appuser && chmod 700 /home/appuser/.ssh && chmod 600 /home/appuser/.ssh/id_rsa
+    - docker-machine create --driver generic --generic-ip-address=${CI_COMMIT_REF_NAME}-branch-host --generic-ssh-user=appuser --generic-ssh-key /home/appuser/.ssh/id_rsa ${CI_COMMIT_REF_NAME}-branch-host && eval $(docker-machine env ${CI_COMMIT_REF_NAME}-branch-host --shell bash)
+    - echo $CI_BUILD_TOKEN | docker login -u gitlab-ci-token --password-stdin https://${CI_REGISTRY}
+    - docker stop reddit && docker rm reddit ; docker run --name reddit -d --network=host ${CI_REGISTRY}/homework/example2/reddit:latest
+  environment:
+    name: dev
+    url: http://dev.example.com
+
+remove branch server:
+  stage: review
+  when: manual
+  script:
+    - echo "Deploy to $CI_ENVIRONMENT_SLUG"
+    - apt-get update
+    - apt-get -y install apt-transport-https ca-certificates curl gnupg2 software-properties-common python-minimal
+    - curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
+    - add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian jessie stable"
+    - echo "deb http://packages.cloud.google.com/apt cloud-sdk-jessie main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list
+    - curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+    - apt-get update && apt-get -y install docker-ce google-cloud-sdk
+    - base=https://github.com/docker/machine/releases/download/v0.14.0 && curl -L $base/docker-machine-$(uname -s)-$(uname -m) >/tmp/docker-machine && install /tmp/docker-machine /usr/local/bin/docker-machine
+    - echo $GCP_AUTH_KEY > .key-file.json
+    - gcloud auth activate-service-account --key-file=.key-file.json
+    - export GOOGLE_APPLICATION_CREDENTIALS=.key-file.json
+    - gcloud compute instances describe ${CI_COMMIT_REF_NAME}-branch-host --zone=europe-west1-b && gcloud compute instances delete ${CI_COMMIT_REF_NAME}-branch-host --zone=europe-west1-b -q
+
+  environment:
+    name: branch/$CI_COMMIT_REF_NAME
+    url: http://$CI_ENVIRONMENT_SLUG.example.com
+  only:
+    - branches
+  except:
+    - master
+
+staging:
+  stage: stage
+  when: manual
+  only:
+    - /^\d+\.\d+\.\d+/
+  script:
+    - echo 'Deploy'
+  environment:
+    name: stage
+    url: https://beta.example.com
+
+production:
+  stage: production
+  when: manual
+  only:
+    - /^\d+\.\d+\.\d+/
+  script:
+    - echo 'Deploy'
+  environment:
+    name: production
+    url: https://example.com
+

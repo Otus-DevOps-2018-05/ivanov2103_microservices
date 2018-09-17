@@ -1,5 +1,5 @@
-# ivanov2103_microservices
-ivanov2103 microservices repository
+# ivanov2103_infra
+ivanov2103 Infra repository
 ![Build Status](https://api.travis-ci.org/Otus-DevOps-2018-02/ivanov2103_microservices.png)  
 
 ## Homework-04
@@ -32,40 +32,57 @@ README.md all Homeworks before that accees by URL below. After Homework-16 each 
 
 [https://github.com/Otus-DevOps-2018-02/ivanov2103_microservices/blob/docker-4/README.md](https://github.com/Otus-DevOps-2018-02/ivanov2103_microservices/blob/docker-4/README.md)
 
-## Homework-17  
-- Created GCP instance for Gitlab CI by gcloud command:
+## Homework gitlab-ci-1  
 
-**gcloud compute firewall-rules create allow-http-some-host --description "allow http to gitlab-host" --allow tcp:80 --source-ranges="0.0.0.0/0" --target-tags="http-server"**  
+[https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/gitlab-ci-1/README.md](https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/gitlab-ci-1/README.md)
 
-**gcloud compute firewall-rules create allow-https-some-host --description "allow https to gitlab-host" --allow tcp:443 --source-ranges="0.0.0.0/0" --target-tags="https-server"**  
+## Homework gitlab-ci-2  
 
-**gcloud compute firewall-rules create allow-gitlab-host --description "allow docker to gitlab-host" --allow tcp:2376 --source-ranges="0.0.0.0/0" --target-tags="my-gitlab-host"**  
-
-**gcloud compute instances create gitlab-host --boot-disk-size=50GB --image-family ubuntu-1604-lts --image-project=ubuntu-os-cloud --machine-type=n1-standard-1 --zone europe-west1-b --tags="my-gitlab-host,http-server,https-server" --restart-on-failure**  
-
-and installed docker:  
-
-**export INSTANCE\_EXT\_IP=\`gcloud --format="value(networkInterfaces[0].accessConfigs[0].natIP)" compute instances list --filter="name=( gitlab-host )"\`**  
-
-**docker-machine create --driver generic --generic-ip-address=${INSTANCE_EXT_IP} --generic-ssh-user=appuser --generic-ssh-key ~/.ssh/appuser docker-vm**
-
-docker-compose was needed installed separately:
-
-**ssh appuser@${INSTANCE\_EXT\_IP} sudo apt-get install -y docker-compose**
-
-Created Gitlab CI image and launched container.
-Created Group, Project and Pipeline by instructions. Registered Runner and run Pipeline.
-Added reddit application to repository and testing him in pipeline.
-
+- Расширили pipeline, определили окружение *dev*, этапы выполнения *staging* и *production*, ограничили некоторые джобы ручным запуском, запретили для этапов *staging* и *production* выкат кода без установленного тэга в git, описали динамические окружения.  
 ### **\***  
+Для создания сервера на пуш ветки, взял за основу ДЗ №14 и документацию:
+[https://cloud.google.com/sdk/docs/quickstart-debian-ubuntu](https://cloud.google.com/sdk/docs/quickstart-debian-ubuntu)
+[https://docs.docker.com/install/linux/docker-ce/debian/](https://docs.docker.com/install/linux/docker-ce/debian/)
+[https://cloud.google.com/docs/authentication/getting-started](https://cloud.google.com/docs/authentication/getting-started)
+[https://cloud.google.com/sdk/docs/authorizing](https://cloud.google.com/sdk/docs/authorizing)
+[https://cloud.google.com/sdk/gcloud/reference/auth/activate-service-account](https://cloud.google.com/sdk/gcloud/reference/auth/activate-service-account)  
+Для тестирования была создана отдельная ветка, в репозиторий с ДЗ не добавлена. Итоговые файлы из этой ветки после тестов были скопированы за пределы локального репозитория, тестовая ветка удалена, фалы скопированы в ветку gitlab-ci-2. Так было сделано для того, чтобы не тянуть в репозиторий с ДЗ историю тестовых коммитов в большом количестве.  
+Выяснил, что docker executors выполняются в среде Debian 8 (image: ruby:2.4.2).  
+Решил, что сервер с докер-машиной будет создаваться только один раз, независимо от количества пушей в данной ветке, пока не будет удален.  
+В проект *example2 Gitlab CI* были добавлены переменные окружения с key-file GCP и названием проекта:  
+*GCP\_AUTH\_KEY  
+GOOGLE\_PROJECT*  
+В ходе тестирования столкнулся с рядом проблем, для исследования которых запускал отдельный контейнер с Debian 8:  
+\- отсутствие привилегий у сервисного аккаунта GCP на выполнение команд **gcloud compute ...** - решено созданием нового аккаунта с ролями: "Администратор Compute" и "Редактор" проекта.  
+\- не сразу учел, что каждый джоб запускается в своем, изолированном, окружении, пытался использовать команду **docker-machine rm** для удаления сервера - заменил на **gcloud compute instances delete**.  
 
-Ansible was used for automation create Gitlab CI Runners. Registration token take from ansible-vault encryption variables file. Registration command was finded by url: [https://docs.gitlab.com/runner/register/](https://docs.gitlab.com/runner/register/)
-Command options of *docker_container* module in my configuration wasn't work (left commented in my playbook) and I used raw module.
+Образ с reddit решил сохранять в GitLab Container Registry:  
+[https://docs.gitlab.com/ce/administration/container_registry.html#container-registry-domain-configuration](https://docs.gitlab.com/ce/administration/container_registry.html#container-registry-domain-configuration)  
+[https://docs.gitlab.com/ee/user/project/container_registry.html#build-and-push-images](https://docs.gitlab.com/ee/user/project/container_registry.html#build-and-push-images)  
+[https://about.gitlab.com/2016/05/23/gitlab-container-registry/](https://about.gitlab.com/2016/05/23/gitlab-container-registry/)  
+Для включения Registry был сгенерирован самоподписной сертификат, который в сборочном окружении добавлялся в список доверенных (иначе не работает команда **docker login**).  
+Сначала для сборочного окружения брал образ docker:dind, но возникли проблемы с разрешением имен (ниже), потратил некоторое время, не разобрался, оставил до лучших времен. Взял за основу тот же Debian 8. Пожалуй, стоит оставить на память о проблеме с привилегиями: [https://gitlab.com/gitlab-org/gitlab-runner/issues/1544](https://gitlab.com/gitlab-org/gitlab-runner/issues/1544).    
+**$ echo "$GITLAB_HOST	gitlab-host.my" >> /etc/hosts**  
+**$ cat /etc/hosts**  
+*127.0.0.1	localhost  
+::1	localhost ip6-localhost ip6-loopback  
+fe00::0	ip6-localnet  
+ff00::0	ip6-mcastprefix  
+ff02::1	ip6-allnodes  
+ff02::2	ip6-allrouters  
+172.17.0.4	docker 67049a353076 runner-ba2ea204-project-4-concurrent-0-docker-0  
+172.17.0.5	runner-ba2ea204-project-4-concurrent-0  
+35.240.5.1	gitlab-host.my*  
+**$ cat /etc/nsswitch.conf**  
+*hosts: files dns*  
+**$ docker login -u gitlab-ci-token -p $CI_BUILD_TOKEN gitlab-host.my**  
+*WARNING! Using --password via the CLI is insecure. Use --password-stdin.  
+Error response from daemon: Get https://gitlab-host.my/v2/: dial tcp: lookup   gitlab-host.my on 169.254.169.254:53: no such host*  
+Образ создается всегда с тегом latest, не вижу смысла тратить ресурсы на отдельный на каждый коммит.  
 
-My channel with notifications in SLACK:
-[https://devops-team-otus.slack.com/messages/C9M5X748Y/](https://devops-team-otus.slack.com/messages/C9M5X748Y/)
-
-Geted error from Gitlab CE pipeline build job:  
-*"fatal: repository 'http://gitlab-ci-token:xxxxxxxxxxxxxxxxxxxx@35.205.167.168/homework/example.git/' not found"*  
-Recreated Gitlab CI Docker image and container with hostname instead IP. Added resolving hostname to current IP in /etc/hosts on server and my workspace.
+Деплой. Пришло время научиться регистрировать Docker машину. Разбираться с копированием сертификатов и использовать драйвер *none* не стал, вариант с драйвером *generic* посчитал проще. Для разблокировки проектных ssh ключей, удалил метаданные  sshKeys инстанса докер-машины.  
+В проект *example2 Gitlab CI* были добавлены переменные окружения с IP адресом сервера Gitlab CI и приватной частью ssh ллюча пользователя appuser:  
+*GITLAB\_HOST*  
+*APPUSER\_PRIV_KEY*  
+IP адрес можно было выяснить и во время выполнения джоба, GCP internal DNS (прописывается в resolv.conf) разрешает имена инстансов, но посчитал приемлемым определить через переменную окружения.  
 
