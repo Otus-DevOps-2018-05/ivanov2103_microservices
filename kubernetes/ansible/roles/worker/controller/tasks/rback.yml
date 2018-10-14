@@ -1,0 +1,13 @@
+---
+# tasks file for controller
+- name: Copy RBACK manifests.
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/rback_cluster_role.yaml', dest: '/home/appuser/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/rback_cluster_role_to_user.yaml', dest: '/home/appuser/' }
+
+- name: Apply RBACK manifests.
+  shell: kubectl apply --kubeconfig admin.kubeconfig -f rback_cluster_role.yaml && kubectl apply --kubeconfig admin.kubeconfig -f rback_cluster_role_to_user.yaml
+  args:
+    chdir: /home/appuser
+

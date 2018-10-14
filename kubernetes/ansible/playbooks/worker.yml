@@ -1,0 +1,9 @@
+---
+- name: Configure worker.
+  hosts:
+    - tag_worker
+  become: true
+  gather_facts: True
+  roles:
+    - role: worker
+

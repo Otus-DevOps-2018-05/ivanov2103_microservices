@@ -1,0 +1,8 @@
+---
+- import_playbook: pre_local.yml
+- import_playbook: base.yml
+- import_playbook: controller.yml
+- import_playbook: worker.yml
+- import_playbook: post_local.yml
+- import_playbook: dns.yml
+
