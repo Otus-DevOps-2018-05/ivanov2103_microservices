@@ -18,3 +18,5 @@ vault.key
 .pytest_cache
 ansible/roles/db/
 *.env
+*.make_env
+
