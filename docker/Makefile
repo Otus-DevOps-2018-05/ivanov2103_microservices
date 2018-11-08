@@ -4,7 +4,10 @@ export $(shell sed 's/=.*//' $(cnf))
 
 .DEFAULT_GOAL := build-all
 
-build-all: build-alertmanager build-prometheus build-mongodb_exporter build-comment build-ui build-post build-blackbox_exporter build-cloudprober build-telegraf
+build-all: build-alertmanager build-prometheus build-mongodb_exporter build-comment build-ui build-post build-blackbox_exporter build-cloudprober build-telegraf build-fluentd
+
+build-fluentd:
+	cd $(REPO_PATH)/logging/fluentd && docker build -t $(USER_NAME)/fluentd .
 
 build-telegraf:
 	cd $(REPO_PATH)/monitoring/telegraf && docker build -t $(USER_NAME)/telegraf:latest .
@@ -33,7 +36,10 @@ build-post:
 build-blackbox_exporter:
 	cd $(REPO_PATH)/monitoring/blackbox_exporter && docker build -t $(USER_NAME)/blackbox_exporter:latest .
 
-push-all: push-alertmanager push-prometheus push-mongodb_exporter push-comment push-ui push-post push-blackbox_exporter push-cloudprober push-telegraf
+push-all: push-alertmanager push-prometheus push-mongodb_exporter push-comment push-ui push-post push-blackbox_exporter push-cloudprober push-telegraf push-fluentd
+
+push-fluentd:
+	echo $(D_HUB_PASSWORD) | docker login -u $(USER_NAME) --password-stdin && docker push $(USER_NAME)/fluentd
 
 push-telegraf:
 	echo $(D_HUB_PASSWORD) | docker login -u $(USER_NAME) --password-stdin && docker push $(USER_NAME)/telegraf:latest

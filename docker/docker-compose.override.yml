@@ -1,14 +1,14 @@
 version: '3.3'
 services:
   ui:
-    volumes:
-    - ${APP_HOME}/ui:/app
+#    volumes:
+#    - ${APP_HOME}/ui:/app
     command: 'puma --debug -w 2'
   post:
-    volumes:
-      - ${APP_HOME}/post-py:/app
+#    volumes:
+#      - ${APP_HOME}/post-py:/app
   comment:
-    volumes:
-    - ${APP_HOME}/comment:/app
+#    volumes:
+#    - ${APP_HOME}/comment:/app
     command: 'puma --debug -w 2'
 
