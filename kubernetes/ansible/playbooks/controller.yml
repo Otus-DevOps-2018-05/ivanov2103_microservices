@@ -1,0 +1,9 @@
+---
+- name: Configure controller.
+  hosts:
+    - tag_controller
+  become: true
+  gather_facts: True
+  roles:
+    - role: controller
+

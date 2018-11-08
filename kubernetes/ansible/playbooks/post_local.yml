@@ -1,0 +1,10 @@
+---
+- name: Local action for create kubectl config based on the admin user credentials.
+  hosts: 127.0.0.1
+  gather_facts: False
+  tasks:
+  - name: Create kubectl config
+    shell: ./gen_cnf_kubectl.sh
+    args:
+      chdir: /home/appuser/microservices-05/kubernetes/the_hard_way
+

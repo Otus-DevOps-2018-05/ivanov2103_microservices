@@ -1,0 +1,24 @@
+---
+# handlers file for worker
+
+- name: enable and start containerd
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: containerd
+
+- name: enable and start kubelet
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: kubelet
+
+- name: enable and start kube-proxy
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: kube-proxy
+

@@ -1,0 +1,36 @@
+---
+# tasks file for controller
+- name: Install controllers components.
+  script: files/install_components.sh
+
+- name: Copy certs and client authentication configs.
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/ca.pem', dest: '/etc/etcd/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/kubernetes-key.pem', dest: '/etc/etcd/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/kubernetes.pem', dest: '/etc/etcd/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/ca.pem', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/ca-key.pem', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/kubernetes-key.pem', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/kubernetes.pem', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/service-account-key.pem', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/service-account.pem', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/encryption-config.yaml', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/admin.kubeconfig', dest: '~/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/kube-controller-manager.kubeconfig', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/kube-scheduler.kubeconfig', dest: '/var/lib/kubernetes/' }
+
+- name: Copy services and sytemd configs.
+  template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: 'templates/etcd.service.j2', dest: '/etc/systemd/system/etcd.service' }
+    - { src: 'templates/kube-apiserver.service.j2', dest: '/etc/systemd/system/kube-apiserver.service' }
+    - { src: 'templates/kube-controller-manager.service.j2', dest: '/etc/systemd/system/kube-controller-manager.service' }
+    - { src: 'templates/kube-scheduler.service.j2', dest: '/etc/systemd/system/kube-scheduler.service' }
+    - { src: 'templates/kube-scheduler.yaml.j2', dest: '/etc/kubernetes/config/kube-scheduler.yaml' }
+  notify:
+    - enable and start etcd
+    - enable and start kube-apiserver
+    - enable and start kube-controller-manager
+    - enable and start kube-scheduler
+

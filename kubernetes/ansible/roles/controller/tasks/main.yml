@@ -1,0 +1,10 @@
+---
+# tasks file for controller
+
+- include: base.yml
+- include: nginx.yml
+  
+- name: Configure RBACK role and user.
+  import_tasks: rback.yml
+  when: ansible_hostname|lower == 'controller-0'
+

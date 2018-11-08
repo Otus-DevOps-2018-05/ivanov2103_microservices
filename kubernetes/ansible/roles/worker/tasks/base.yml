@@ -1,0 +1,47 @@
+---
+# tasks file for worker
+- name: Apt update.
+  apt:
+    update_cache: yes
+
+- name: Install a list of packages.
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - socat
+    - conntrack
+    - ipset
+
+- name: Install workers components.
+  script: files/install_worker_component.sh
+
+- name: Get pod-cidr to var.
+  script: files/get_pod_cidr.sh
+  register: podcidr
+
+- name: Copy certs and client authentication configs.
+  copy: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/{{ ansible_hostname }}-key.pem', dest: '/var/lib/kubelet/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/{{ ansible_hostname }}.pem', dest: '/var/lib/kubelet/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/{{ ansible_hostname }}.kubeconfig', dest: '/var/lib/kubelet/kubeconfig' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/ca.pem', dest: '/var/lib/kubernetes/' }
+    - { src: '/home/appuser/microservices-05/kubernetes/the_hard_way/kube-proxy.kubeconfig', dest: '/var/lib/kube-proxy/kubeconfig' }
+
+- name: Copy services and sytemd configs.
+  template: src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: 'templates/10-bridge.conf.j2', dest: '/etc/cni/net.d/10-bridge.conf' }
+    - { src: 'templates/99-loopback.conf.j2', dest: '/etc/cni/net.d/99-loopback.conf' }
+    - { src: 'templates/config.toml.j2', dest: '/etc/containerd/config.toml' }
+    - { src: 'templates/containerd.service.j2', dest: '/etc/systemd/system/containerd.service' }
+    - { src: 'templates/kubelet-config.yaml.j2', dest: '/var/lib/kubelet/kubelet-config.yaml' }
+    - { src: 'templates/kubelet.service.j2', dest: '/etc/systemd/system/kubelet.service' }
+    - { src: 'templates/kube-proxy-config.yaml.j2', dest: '/var/lib/kube-proxy/kube-proxy-config.yaml' }
+    - { src: 'templates/kube-proxy.service.j2', dest: '/etc/systemd/system/kube-proxy.service' }
+  notify:
+    - enable and start containerd
+    - enable and start kubelet
+    - enable and start kube-proxy
+

@@ -1,0 +1,34 @@
+---
+# handlers file for controller
+
+- name: enable and start etcd
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: etcd
+
+- name: enable and start kube-apiserver
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: kube-apiserver
+
+- name: enable and start kube-controller-manager
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: kube-controller-manager
+
+- name: enable and start kube-scheduler
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    enabled: True
+    name: kube-scheduler
+
+- name: start nginx
+  service: name=nginx state=restarted
+
