@@ -54,52 +54,27 @@ README.md all Homeworks before that accees by URL below. After Homework-16 each 
 
 ## Homework kubernetes-1
 
-- Создали manifest-ы для запуска наших приложений в объектах типа *Deployment*.  
-- В GCP развернули кластер Kubernetes по руководству от Kelsey Hightower: [https://github.com/kelseyhightower/kubernetes-the-hard-way](https://github.com/kelseyhightower/kubernetes-the-hard-way). Проверил запуск подов (ui, post, mongo, comment) командой **for file in $(find ../reddit -type f); do kubectl apply -f $file; done** - поды были созданы и запущены (статус Running)  
+[https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/kubernetes-1/README.md](https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/kubernetes-1/README.md)
 
-### Installing the Client Tools
-- Установили клиентские утилиты для создания и управления сертификатами: *fssl*, *cfssljson*, и CLI утилиту для управления кластером: *kubectl*.  
-### **\*** Provisioning Compute Resources
-- Создание всех инфраструктурных объектов в GCP описано в terraform, в трех модулях: vpc - ресурсы сети, controller - инстансы контроллеров, worker - инстансы воркеров.  
-### **\*** Provisioning the CA and Generating TLS Certificates
-- Для создания PKI инфраструктуры (корневой сертификат, клиентские и серверные сертификаты компонентов Kubernetes) сделан скрипт *the\_hard\_way/gen\_cert.sh*, который выполняется плейбуком **playbook/pre\_local.yml** на локальном хосте, в подкаталоге *the\_hard\_way*.  
-- Копирование ключей и сертификатов на сервера перенесено в таски *base.yml* ролей Ansible: *controller* и *worker*.  
-### **\*** Generating Kubernetes Configuration Files for Authentication
-- Конфигурационные файлы компонентов Kubernetes для аутентификации и указания на API Servers, генерируются скриптом *the\_hard\_way/gen\_cnf.sh*, который выполняется плейбуком **playbook/pre\_local.yml** на локальном хосте, в подкаталоге *the\_hard\_way*.  
-- Копирование файлов на сервера перенесено в таски *base.yml* ролей Ansible: *controller* и *worker*.  
-### **\*** Generating the Data Encryption Config and Key
-- Создание ключа и конфигурации шифрования секретов Kubernetes перенесено в скрипт *the\_hard\_way/gen\_cert.sh*, копирование конфигурации - в таск *base.yml* роли *controller*.  
-### **\*** Bootstrapping the etcd Cluster && Bootstrapping the Kubernetes Control Plane
-- Для установки и запуска компонентов контроллеров создана роль *controller* в Ansible.  
-- Разворачивание Google Network Load Balancer перенесено в terraform.  
-- Структура роли:
-  - *files/install\_components.sh* - подготовка файловой структуры контроллеров, скачивание бинарников: etcd, kube-apiserver, kube-controller-manager, kube-scheduler, kubectl, копирование в подготовленные каталоги.  
-  - *handlers/main.yml* - обработчики запуска компонентов как сервисов, описанных в конфигурациях systemd, реверс-прокси nginx.  
-  - *templates/[etcd.service.j2, kube-apiserver.service.j2, kube-controller-manager.service.j2, kubernetes.default.svc.cluster.local.j2, kube-scheduler.service.j2, kube-scheduler.yaml.j2, rback\_cluster\_role\_to\_user.yaml.j2, rback\_cluster\_role.yaml.j2]* - шаблоны конфигураций компонентов Kubernetes, конфигураций systemd для данных компонентов, конфигурации реверс-прокси nginx для получения health checks API Servers, конфигурации RBAC роли и добавления пользователя в RBAC роль.  
-  - *tasks/*
-      - *base.yml* - выполнение *install\_components.sh*, копирование сертификатов, конфигураций, вызов обработчиков запуска компонентов контроллеров.  
-      - *nginx.yml* - установка nginx, копирование конфигурационного файла, запуск сервиса.  
-      - *rback.yml* - копирование и применение конфигураций RBACK.  
-      - *main.yml* - включает все таски в необходимой последовательности, определяет условие выполнения rback.yml (только на controller-0).  
-### **\*** Bootstrapping the Kubernetes Worker Nodes
-- Для установки и запуска компонентов воркеров создана роль *worker* в Ansible.  
-- Структура роли:
-  - *files/*
-      - *get\_pod\_cidr.sh* - скрипт получения адреса подсети. Вынесено в скрипт по причине возникновения ошибки синтаксиса (символ двоеточия в команде) при выполнении модулем shell - быстро не разобрался, не стал тартить время.  
-      - *install_worker_component.sh* - подготовка файловой структуры контроллеров, скачивание бинарников: containerd, kube-proxy, kubelet, kubectl и др., копирование в подготовленные каталоги.
-  - *handlers/main.yml* - обработчики запуска компонентов как сервисов, описанных в конфигурациях systemd.  
-  - *templates/[10-bridge.conf.j2, 99-loopback.conf.j2, config.toml.j2, containerd.service.j2, kubelet-config.yaml.j2, kubelet.service.j2, kube-proxy-config.yaml.j2, kube-proxy.service.j2]* - шаблоны конфигураций компонентов Kubernetes, конфигураций systemd для данных компонентов, конфигураций сетевого плагина CNI.  
-  - *tasks/*
-      - *base.yml* - выполнение files/* скриптов, копирование сертификатов, конфигураций, вызов обработчиков запуска компонентов контроллеров.  
-      - *main.yml* - включает все таски в необходимой последовательности.  
-### **\*** Configuring kubectl for Remote Access
-- Для создания конфигурационного файла kubectl с предоставлением административных полномочий, сделан скрипт *gen\_cnf\_kubectl.sh*, который выполняется плейбуком **playbook/post\_local.yml** на локальном хосте, в подкаталоге *the\_hard\_way*.  
-### **\*** Provisioning Pod Network Routes
-- Настройка роутов перенесена в terraform.  
-### **\*** Deploying the DNS Cluster Add-on
-- Запуск add-on DNS выполняется плейбуком **playbook/dns.yml**.  
+## Homework kubernetes-2
 
-Для выполнение модулей Ansible на хостах и сбора фактов, на всех инстансах был установлен python, выполняется плейбуком **playbook/base.yml**.  
+- Были установлены утилиты kubectl и minikube. Бинарник kubectl скачивл по ссылке: [http://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/windows/amd64/kubectl.exe](http://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/windows/amd64/kubectl.exe), так как в Powershell Gallery последняя версия 1.6 от 29.10.2017, а нам требуется не меньше 1.8.0.  
+- Minukube-кластер был развернут и запущен в локальном гипервизоре VirtualBox.  
+Познакомился с описанием манифеста и конфигурированием kubectl.  
+- Запустили UI, в описание добавили метки пода, указали их селектору, определили прослушиваемый приложением порт, пробросили при помощи kubectl на локальную машину, убедились в доступности приложения по ссылке http://localhost:local-port.  
+Повторили для comment, post и mongoDB. Для mongoDB добавили описание стандартного Volume.  
+- Создали по объекту Service для связи ui с post и ui с comment, в описание добавили метки подов на которые перенаправляется трафик. Проверили разрешение в DNS имени сервиса.  
+Добавили Service для mongoDB, пробросили порт на под UI, нашли причину недоступности mongoDB (comment и post обращаются к БД по именам, определенным ранее переменными в Dockerfile-ах и отличными от имени нашего сервиса).  
+- Разделили сервис mongoDB на два: для БД comment и для БД post, определили новые метки для селектора сервисов, добавили эти метки в манифест пода mongoDB.  
+Переопределили подам comment и post переменные окружения для обращения к базам, установили их в соответсвие именам новых сервисов.  
+Пересоздали объекты, убедились в доступности БД сервисам comment и post.  
+- Для доступа к UI снаружи определили сервис типа NodePort. С помощью minicube получили страницу с адресом ноды и портом, открытым для перенаправления трафика на targetPort пода. Увидели, так же, назначенный порт ноды в выводе команды **minikube services list**.  
+- Посмотрели список запущенных add-on-ов minicube, нашли объекты dashboard в namespace kube-system, познакомились с визуализированным представлением кластера.  
+- Выделили namespace dev для среды разработки, запустили приложение в выделенном окружении, добавили в манифест UI информацию об окружении.  
+- Развернули Kubernetes cluster в Google Kubernetes Engine GCP, сгенерировали новый контекст kubectl для подключения к GKE, создали dev namespace, задеплоили все компоненты приложения в namespace dev.  
+Создали правило файерволла для доступа к нодам кластера по портам из диапазона: 30000-32767, нашли порт публикации сервиса UI, проверили доступность приложения  
+Запустили dashboard в GKE, обнаружили отсутствие необходимых привилегий у dashboard. Назначили нашему Service Account роль cluster-admin для полного доступа к кластеру, убедились, что dashboard открывается без ошибок.  
 
-Роли Ansible не были оптимизированы для переиспользования - таски и обработчики можно разделить, часть переменных вынести в переменные роли. Docker образы в подах разворачиваются из Docker HUB, были запушены при выполнении предыдущих ДЗ.  
+## **\***
 
+На звездочку, к сожаление, времени не остается, на работе начали внедрять практики DevOps, занимаюсь этим и в нерабочее время.  
