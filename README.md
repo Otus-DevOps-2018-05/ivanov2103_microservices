@@ -81,4 +81,3 @@ README.md all Homeworks before that accees by URL below. After Homework-16 each 
 
 P.S.
 В следующем ДЗ столкнулся с необходимостью пересоздания кластера - сделал звездочку в части разворачивания кластера GKE terraform-ом.  
-
