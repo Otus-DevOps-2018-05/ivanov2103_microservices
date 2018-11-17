@@ -19,4 +19,6 @@ vault.key
 ansible/roles/db/
 *.env
 *.make_env
-
+.rnd
+tls.crt
+tls.key
