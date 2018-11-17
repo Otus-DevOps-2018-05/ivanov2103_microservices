@@ -73,4 +73,4 @@ README.md all Homeworks before that accees by URL below. After Homework-16 each 
 - Вместо Volume типа emptyDir, который удаляется с остановкой пода, подключили к mongoDB внешнее GCE хранилище типа gcePersistentDisk. В этом случае данные не удаляются, поду выделяется диск целиком.  
 - Механизм PersistentVolume позволяют использовать хранилище, общее для всего кластера, выделяя его подам по запросу.  
 Создали описание для PersistentVolume, добавили объект в кластер, создали запрос (PersistentVolumeClaim) на выделение тома, подключили том к поду mongoDB.  
-- Для автоматического создания хранилища по запросу, создали объект типа StorageClass, создали новый запрос PersistentVolumeClaim со ссылкой на StorageClass, вместо PersistentVolume, включили данный запрос, вместо предыдущего, в описание пода.  
+- Для автоматического создания хранилища по запросу, создали объект типа StorageClass, создали новый запрос PersistentVolumeClaim со ссылкой на StorageClass, вместо PersistentVolume, включили данный запрос, взамен предыдущего, в описание пода.  
