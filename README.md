@@ -90,3 +90,4 @@ README.md all Homeworks before that accees by URL below. After Homework-16 each 
 Не проходит статдия review, в функции install_dependencies ошибка, неправильный URL на получения ключа sgerrand.rsa.pub. Так же, установленный tiller более свежей версии, в функции install_tiller заменил параметр --upgrade на --force-upgrade в команде инициализации. Нашел исправление в канале курса, спасибо Vasily и Alexander Suleymanov.  
 Распространили изменения на Post и Comment.  
 - Создали pipeline для деплоя, задеплоили приложение в окружениях staging и production.  
+
