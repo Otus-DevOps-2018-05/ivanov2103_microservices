@@ -58,26 +58,36 @@ README.md all Homeworks before that accees by URL below. After Homework-16 each 
 
 ## Homework kubernetes-2
 
-- Были установлены утилиты kubectl и minikube. Бинарник kubectl скачивл по ссылке: [http://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/windows/amd64/kubectl.exe](http://storage.googleapis.com/kubernetes-release/release/v1.10.0/bin/windows/amd64/kubectl.exe), так как в Powershell Gallery последняя версия 1.6 от 29.10.2017, а нам требуется не меньше 1.8.0.  
-- Minukube-кластер был развернут и запущен в локальном гипервизоре VirtualBox.  
-Познакомился с описанием манифеста и конфигурированием kubectl.  
-- Запустили UI, в описание добавили метки пода, указали их селектору, определили прослушиваемый приложением порт, пробросили при помощи kubectl на локальную машину, убедились в доступности приложения по ссылке http://localhost:local-port.  
-Повторили для comment, post и mongoDB. Для mongoDB добавили описание стандартного Volume.  
-- Создали по объекту Service для связи ui с post и ui с comment, в описание добавили метки подов на которые перенаправляется трафик. Проверили разрешение в DNS имени сервиса.  
-Добавили Service для mongoDB, пробросили порт на под UI, нашли причину недоступности mongoDB (comment и post обращаются к БД по именам, определенным ранее переменными в Dockerfile-ах и отличными от имени нашего сервиса).  
-- Разделили сервис mongoDB на два: для БД comment и для БД post, определили новые метки для селектора сервисов, добавили эти метки в манифест пода mongoDB.  
-Переопределили подам comment и post переменные окружения для обращения к базам, установили их в соответсвие именам новых сервисов.  
-Пересоздали объекты, убедились в доступности БД сервисам comment и post.  
-- Для доступа к UI снаружи определили сервис типа NodePort. С помощью minicube получили страницу с адресом ноды и портом, открытым для перенаправления трафика на targetPort пода. Увидели, так же, назначенный порт ноды в выводе команды **minikube services list**.  
-- Посмотрели список запущенных add-on-ов minicube, нашли объекты dashboard в namespace kube-system, познакомились с визуализированным представлением кластера.  
-- Выделили namespace dev для среды разработки, запустили приложение в выделенном окружении, добавили в манифест UI информацию об окружении.  
-- Развернули Kubernetes cluster в Google Kubernetes Engine GCP, сгенерировали новый контекст kubectl для подключения к GKE, создали dev namespace, задеплоили все компоненты приложения в namespace dev.  
-Создали правило файерволла для доступа к нодам кластера по портам из диапазона: 30000-32767, нашли порт публикации сервиса UI, проверили доступность приложения  
-Запустили dashboard в GKE, обнаружили отсутствие необходимых привилегий у dashboard. Назначили нашему Service Account роль cluster-admin для полного доступа к кластеру, убедились, что dashboard открывается без ошибок.  
+[https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/kubernetes-2/README.md](https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/kubernetes-2/README.md)
 
-## **\***
+## Homework kubernetes-3
 
-На звездочку, к сожаление, времени не остается, на работе начали внедрять практики DevOps, занимаюсь этим и в нерабочее время.  
+[https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/kubernetes-3/README.md](https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/kubernetes-3/README.md)
 
-P.S.
-В следующем ДЗ столкнулся с необходимостью пересоздания кластера - сделал звездочку в части разворачивания кластера GKE terraform-ом.  
+## Homework kubernetes-4
+
+[https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/kubernetes-4/README.md](https://github.com/Otus-DevOps-2018-05/ivanov2103_microservices/blob/kubernetes-4/README.md)
+
+## Homework kubernetes-5
+
+### Мониторинг
+- Установили ingress-контроллер nginx из Helm-чарта.  
+- Загрузили prometheus в Charts каталог, переопределили некоторые переменные в custom_values.yml, установили prometheus.  
+Ознакомились с, уже добавленными в мониторинг, таргетами, найденными с помощью service discovery, настроенного через custom_values.yml.  
+Для безопасного сбора метрик настроена схема подключения по https, познакомились с настройками relabel_configs.  
+- Для сбора информации о состоянии объектов k8s, включили в custom_values.yml сервис kube-state-metrics, обновили релиз.  
+Включили сбор метрик node-exporter.  
+- Запустили приложение из чарта reddit в трех окружениях.  
+- Изменили custom_values.yml, добавили в механизм ServiceDiscovery параметры для обнаружения приложений и метки k8s для них. Дополнительно добавили метки для prometheus.  
+Отделили target-ы компонент приложений друг от друга по окружениям и по компонентам приложения.  
+- Установили Grafana из Helm-чарта. Команда установки, как выяснилось, должна быть такой:
+helm upgrade --install grafana stable/grafana --set "adminPassword=admin" \  
+--set "service.type=NodePort" \  
+--set "ingress.enabled=true" \  
+--set "ingress.hosts={reddit-grafana}" - спасибо Vitaliy Lopin.  
+Добавили prometheus data-source и дашборд "Kubernetes cluster monitoring (via Prometheus)".  
+Для фильтрации отображаемой информации использовали механизм templating - добавили переменную запроса к prometheus, шаблонизировали запрос. Добавил изменения в дашборды: UI_Service_Monitoring.json и Business_Logic_Monitoring.json.  
+
+### Логирование
+- Добавили метку elastichost самой производительной ноде, создали манифесты объектов стека EFK, запустили стек.
+Установили Kibana из Helm-чарта, просмотрели информацию о кластере.  

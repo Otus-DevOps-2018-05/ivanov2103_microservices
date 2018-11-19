@@ -22,3 +22,4 @@ ansible/roles/db/
 .rnd
 tls.crt
 tls.key
+Gitlab_ci/
